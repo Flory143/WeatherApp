@@ -2,28 +2,48 @@ const input = document.querySelector(".search__input");
 const btn = document.querySelector(".search__btn");
 
 btn.addEventListener("click", () => {
-  checkCity();
-});
-
-addEventListener("keydown", (event) => {
-  if (input.value != "" && event.key === "Enter") {
-    checkCity();
+  if (input.value != "") {
+    takeCity();
+  } else {
+    console.warn("Error in input!");
   }
 });
 
-function checkCity() {
+addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    if (input.value != "") {
+      takeCity();
+    } else {
+      console.warn("Error in input!");
+    }
+  }
+});
+
+function takeCity() {
   let inputText = input.value.trim();
-  inputText == "" ? console.error("Error in input!") : console.log(inputText);
+
   input.value = "";
 
-  // api key from https://opencagedata.com/dashboard#geocoding
-  const apiKey = "59d1d77f3da34a11999c868634c20819";
   let cityName = inputText;
 
   cityName = cityName.replace(/^[^a-zа-яё]*([a-zа-яё])/i, function (m) {
     return m.toUpperCase();
   });
+
   cityName = cityName.replace(/[^a-zA-Zа-яА-Я]/g, "");
+
+  localStorage.clear();
+  localStorage.setItem("сityName", cityName);
+
+  checkCity();
+}
+
+// Takes coodinates of city
+function checkCity() {
+  // api key from https://opencagedata.com/dashboard#geocoding
+  const apiKey = "59d1d77f3da34a11999c868634c20819";
+
+  let cityName = localStorage.getItem("сityName");
 
   const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
     cityName
@@ -37,6 +57,9 @@ function checkCity() {
         let latitude = location.lat;
         let longitude = location.lng;
 
+        localStorage.setItem("cityLatitude", latitude);
+        localStorage.setItem("cityLongitude", longitude);
+
         console.log(
           `Координаты города ${cityName}: Широта ${latitude}, Долгота ${longitude}`
         );
@@ -44,14 +67,17 @@ function checkCity() {
         loadActual(latitude, longitude, cityName);
       } else {
         console.error(`Не удалось получить координаты для города ${cityName}`);
+        alert(`Не удалось получить координаты для города ${cityName}`);
+        localStorage.clear();
       }
     })
     .catch((error) => {
       console.error("Произошла ошибка при выполнении запроса:", error);
+      localStorage.clear();
     });
 }
 
-function loadActual(latitude = "", longitude = "", cityName = "Москва") {
+function loadActual(latitude, longitude, cityName) {
   const windDirText = document.querySelector(".wind__direction-text");
   const daysImg = document.querySelectorAll(".day__img");
   const dayImg = document.querySelectorAll(".temprature__real-img");
@@ -68,7 +94,6 @@ function loadActual(latitude = "", longitude = "", cityName = "Москва") {
     })
     .then((data) => {
       console.log(data);
-      console.log(data.current.temperature_2m);
 
       // app__info
       document.querySelector(".info__city").textContent = cityName;
@@ -130,9 +155,48 @@ function loadActual(latitude = "", longitude = "", cityName = "Москва") {
       // app__daily
 
       for (let i = 0; i < 7; i++) {
-        dayText[
-          i
-        ].textContent = `${data.daily.time[i][8]}${data.daily.time[i][9]}.${data.daily.time[i][5]}${data.daily.time[i][6]}`;
+        let dayDate = `${data.daily.time[i][8]}${data.daily.time[i][9]}`;
+        switch (`${data.daily.time[i][5]}${data.daily.time[i][6]}`) {
+          case "1":
+            dayText[i].textContent = `${dayDate} января`;
+            break;
+          case "2":
+            dayText[i].textContent = `${dayDate} февраля`;
+            break;
+          case "3":
+            dayText[i].textContent = `${dayDate} марта`;
+            break;
+          case "4":
+            dayText[i].textContent = `${dayDate} апреля`;
+            break;
+          case "5":
+            dayText[i].textContent = `${dayDate} мая`;
+            break;
+          case "6":
+            dayText[i].textContent = `${dayDate} июня`;
+            break;
+          case "7":
+            dayText[i].textContent = `${dayDate} июля`;
+            break;
+          case "8":
+            dayText[i].textContent = `${dayDate} августа`;
+            break;
+          case "9":
+            dayText[i].textContent = `${dayDate} сентября`;
+            break;
+          case "10":
+            dayText[i].textContent = `${dayDate} октября`;
+            break;
+          case "11":
+            dayText[i].textContent = `${dayDate} ноября`;
+            break;
+          case "12":
+            dayText[i].textContent = `${dayDate} декабря`;
+            break;
+          default:
+            dayText[i].textContent = `${dayDate} число`;
+        }
+
         document.querySelectorAll(".content__temp-min")[
           i
         ].textContent = `${data.daily.temperature_2m_min[i]} ${data.current_units.temperature_2m}`;
@@ -160,4 +224,16 @@ function loadActual(latitude = "", longitude = "", cityName = "Москва") {
 }
 
 // onload
-loadActual(55.7505412, 37.6174782, "Москва");
+if (
+  localStorage.getItem("cityLatitude") !== null &&
+  localStorage.getItem("cityLongitude") !== null &&
+  localStorage.getItem("сityName") !== null
+) {
+  loadActual(
+    localStorage.getItem("cityLatitude"),
+    localStorage.getItem("cityLongitude"),
+    localStorage.getItem("сityName")
+  );
+} else {
+  loadActual(55.7505412, 37.6174782, "Москва");
+}
