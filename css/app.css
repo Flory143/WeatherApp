@@ -211,7 +211,7 @@ hr {
 @media (width <= 420px) {
   .day {
     height: 220px;
-    width: 130px;
+    width: 120px;
   }
 
   .day__img {
